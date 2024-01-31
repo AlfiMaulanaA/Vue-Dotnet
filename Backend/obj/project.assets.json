@@ -10021,11 +10021,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "d:\\Alfi\\RnD\\Fullstack-Project\\Backend\\Backend.csproj",
+      "projectUniqueName": "D:\\Alfi\\RnD\\Vue-Dotnet\\Backend\\Backend.csproj",
       "projectName": "Backend",
-      "projectPath": "d:\\Alfi\\RnD\\Fullstack-Project\\Backend\\Backend.csproj",
+      "projectPath": "D:\\Alfi\\RnD\\Vue-Dotnet\\Backend\\Backend.csproj",
       "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-      "outputPath": "d:\\Alfi\\RnD\\Fullstack-Project\\Backend\\obj\\",
+      "outputPath": "D:\\Alfi\\RnD\\Vue-Dotnet\\Backend\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config"

@@ -44,9 +44,9 @@
     <!-- Add User Form -->
     <div>
       <!-- Form Input data user -->
-      <input type="text" v-model="newUser.username" placeholder="Username">
-      <input type="password" v-model="newUser.password" placeholder="Password">
-      <input type="text" v-model="newUser.phone" placeholder="Phone">
+      <input type="text" v-model="newUser.username" placeholder="Username" class="form-control" required>
+      <input type="password" v-model="newUser.password" placeholder="Password" class="form-control" required>
+      <input type="text" v-model="newUser.phone" placeholder="Phone" class="form-control">
       <!-- Function for save users -->
       <button class="btn btn-success" @click="createUser">Add User</button>
     </div>

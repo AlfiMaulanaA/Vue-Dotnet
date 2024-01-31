@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "ibvbCq9Td2SUwvt/qQrSXb3IOdchIm+50ZTyWjre854jIGifBToAPunhOdigOCyA4Aep/hPBlDkUaVA/jOBDVA==",
+  "dgSpecHash": "dJt8BiQq/yvtyenAbryeot9nCUTU7nNQJeSX3IUlEfQ/F1H4S62O+7lIje9gSGgX6fCY8rgFM4zY85FTtxbH1A==",
   "success": true,
-  "projectFilePath": "D:\\Alfi\\RnD\\Fullstack-Project\\Backend\\Backend.csproj",
+  "projectFilePath": "D:\\Alfi\\RnD\\Vue-Dotnet\\Backend\\Backend.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\user\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\user\\.nuget\\packages\\microsoft.aspnetcore.antiforgery\\2.2.0\\microsoft.aspnetcore.antiforgery.2.2.0.nupkg.sha512",

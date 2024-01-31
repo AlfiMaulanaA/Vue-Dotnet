@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Alfi\\RnD\\Fullstack-Project\\Backend\\Backend.csproj": {}
+    "D:\\Alfi\\RnD\\Vue-Dotnet\\Backend\\Backend.csproj": {}
   },
   "projects": {
-    "D:\\Alfi\\RnD\\Fullstack-Project\\Backend\\Backend.csproj": {
+    "D:\\Alfi\\RnD\\Vue-Dotnet\\Backend\\Backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Alfi\\RnD\\Fullstack-Project\\Backend\\Backend.csproj",
+        "projectUniqueName": "D:\\Alfi\\RnD\\Vue-Dotnet\\Backend\\Backend.csproj",
         "projectName": "Backend",
-        "projectPath": "D:\\Alfi\\RnD\\Fullstack-Project\\Backend\\Backend.csproj",
+        "projectPath": "D:\\Alfi\\RnD\\Vue-Dotnet\\Backend\\Backend.csproj",
         "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-        "outputPath": "D:\\Alfi\\RnD\\Fullstack-Project\\Backend\\obj\\",
+        "outputPath": "D:\\Alfi\\RnD\\Vue-Dotnet\\Backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config"

@@ -30,9 +30,6 @@ using (var scope = app.Services.CreateScope())
 
 //Endpoint User for method Get all data, Get data use ID, Create or add data user, Update data User, Delete data user
 
-// Endpoint to get all users
-app.MapGet("/", async (FullStackContext db) => "test");
-
 // app.MapGet("/users", async (FullStackContext db) =>
 app.MapGet("/users", async (FullStackContext db) => //Field in the name backend context with your name Context (FullStackContext)
     await db.Users.ToListAsync());
@@ -96,3 +93,4 @@ public class User
     public string? Password { get; set; }
     public string? Phone { get; set; }
 }
+
