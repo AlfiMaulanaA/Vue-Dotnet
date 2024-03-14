@@ -1,0 +1,230 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Configure JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+builder.Services.AddAuthentication(opt =>
+{
+    opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"])),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"]
+    };
+});
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Configure services
+builder.Services.AddDbContext<DotnetContext>(options =>
+    options.UseSqlite("Datasource=./data.db"));
+
+builder.Services.AddCors(o =>
+{
+    // Enable CORS
+    o.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader());
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
+
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Auto migration logic
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<DotnetContext>();
+    dbContext.Database.Migrate();
+}
+
+//Endpoint User for method Get all data, Get data use ID, Create or add data user, Update data User, Delete data user
+app.MapPost("/login", async (DotnetContext dbContext, AppUser loginDetails, IPasswordHasher<AppUser> hasher, IConfiguration config) =>
+{
+    var user = dbContext.Users.SingleOrDefault(u => u.Username == loginDetails.Username);
+
+    if (user == null || hasher.VerifyHashedPassword(user, user.Password, loginDetails.Password) != PasswordVerificationResult.Success)
+    {
+        return Results.Unauthorized();
+    }
+
+    var token = GenerateJwtToken(user, config); // Corrected
+    var refreshToken = GenerateRefreshToken(); // Correct usage
+    user.RefreshToken = refreshToken;
+    user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
+
+    await dbContext.SaveChangesAsync();
+
+    return Results.Ok(new { Token = token, RefreshToken = refreshToken });
+});
+
+app.MapPost("/register", async (DotnetContext dbContext, AppUser registrationDetails, IPasswordHasher<AppUser> hasher) =>
+{
+    var userExists = dbContext.Users.Any(u => u.Username == registrationDetails.Username);
+    if (userExists)
+    {
+        return Results.BadRequest("User already exists.");
+    }
+
+    registrationDetails.Password = hasher.HashPassword(registrationDetails, registrationDetails.Password);
+
+    dbContext.Users.Add(registrationDetails);
+    await dbContext.SaveChangesAsync();
+
+    return Results.Ok("User registered successfully.");
+});
+
+app.MapPost("/refresh-token", async (DotnetContext dbContext, string refreshToken, IConfiguration config) =>
+{
+    var user = dbContext.Users.SingleOrDefault(u => u.RefreshToken == refreshToken && u.RefreshTokenExpiryTime > DateTime.Now);
+
+    if (user == null)
+    {
+        return Results.Unauthorized();
+    }
+
+    // Now passing the 'config' to the 'GenerateJwtToken' method
+    var newToken = GenerateJwtToken(user, config);
+    var newRefreshToken = GenerateRefreshToken();
+    user.RefreshToken = newRefreshToken;
+    user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
+
+    await dbContext.SaveChangesAsync();
+
+    return Results.Ok(new { Token = newToken, RefreshToken = newRefreshToken });
+});
+
+
+static string GenerateJwtToken(AppUser user, IConfiguration configuration)
+{
+    var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Name, user.Username)
+        // Add more claims as needed
+    };
+
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
+    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+    var expiry = DateTime.Now.AddMinutes(30); // Token expiry time
+
+    var token = new JwtSecurityToken(
+        issuer: configuration["Jwt:Issuer"],
+        audience: configuration["Jwt:Audience"],
+        claims: claims,
+        expires: expiry,
+        signingCredentials: creds
+    );
+
+    return new JwtSecurityTokenHandler().WriteToken(token);
+}
+
+static string GenerateRefreshToken()
+{
+    var randomNumber = new byte[32];
+    using (var rng = RandomNumberGenerator.Create())
+    {
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
+    }
+}
+
+app.MapGet("/users", async (DotnetContext dbContext) =>
+{
+    var users = await dbContext.Users.Select(u => new UserDto { Id = u.Id, Username = u.Username }).ToListAsync();
+    return Results.Ok(users);
+}).RequireAuthorization("AdminOnly");
+
+app.MapGet("/users/{id}", async (DotnetContext dbContext, int id) =>
+{
+    var user = await dbContext.Users.FindAsync(id);
+    if (user == null) return Results.NotFound();
+    return Results.Ok(new UserDto { Id = user.Id, Username = user.Username });
+}).RequireAuthorization("AdminOnly");
+
+app.MapPut("/users/{id}", async (DotnetContext dbContext, int id, AppUser updatedUser, IPasswordHasher<AppUser> hasher) =>
+{
+    var user = await dbContext.Users.FindAsync(id);
+    if (user == null) return Results.NotFound();
+
+    user.Username = updatedUser.Username;
+    user.Password = hasher.HashPassword(user, updatedUser.Password); // Hash the new password
+    await dbContext.SaveChangesAsync();
+
+    return Results.NoContent();
+}).RequireAuthorization("AdminOnly");
+
+app.MapDelete("/users/{id}", async (DotnetContext dbContext, int id) =>
+{
+    var user = await dbContext.Users.FindAsync(id);
+    if (user == null) return Results.NotFound();
+
+    dbContext.Users.Remove(user);
+    await dbContext.SaveChangesAsync();
+
+    return Results.Ok($"User with ID {id} deleted.");
+}).RequireAuthorization("AdminOnly");
+
+app.UseCors();
+app.Run();
+
+//Register Table
+public class DotnetContext : DbContext
+{
+    public DbSet<AppUser> Users { get; set; }
+    public DotnetContext(DbContextOptions<DotnetContext> options) : base(options) { }
+
+}
+public class AppUser
+{
+    public int Id { get; set; }
+    public string Username { get; set; }
+    public string Password { get; set; }
+    public string RefreshToken { get; set; } // Store the refresh token
+    public DateTime RefreshTokenExpiryTime { get; set; } // Expiry time for the refresh token
+}
+
+public class UserDto
+{
+    public int Id { get; set; }
+    public string Username { get; set; }
+    // Exclude properties like Password and RefreshToken
+}
+
+
